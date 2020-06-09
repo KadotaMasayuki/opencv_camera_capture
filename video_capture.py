@@ -44,10 +44,13 @@ if __name__ == '__main__':
     print(" {0}".format(fps))
 
     # 撮影＝ループ中にフレームを1枚ずつ取得（qキーで撮影終了）
+    beginTime = 0
+    nowTime = 0;
     isRecording = False
     isFlip = False
     while (True):
         ret, frame = cap.read()
+        nowTime = time.time()
         # 左右反転
         if (isFlip):
             frame = cv2.flip(frame, 1) # 0:上下反転, 正の値:左右反転, 負の値:上下左右反転
@@ -57,9 +60,15 @@ if __name__ == '__main__':
         # 表示
         font = cv2.FONT_HERSHEY_SIMPLEX
         if (isRecording):
-            cv2.putText(frame, "Recording       <1>stop    <2>flip    <q,ESC>exit", (10, 30), font, 0.7, (0,0,255), 1, cv2.LINE_AA)
+            # 記録中は赤枠を表示
+            cv2.rectangle(frame, (0+1,0+1), (w-2,h-2), (0, 64, 255), 4, cv2.LINE_8)
+            # メニュー
+            cv2.putText(frame, "Recording       <1>stop   <2>flip   <q,ESC>exit", (10, 30), font, 0.7, (0,0,255), 1, cv2.LINE_AA)
+            # 記録時間
+            cv2.putText(frame, "{0:0.3f}[sec]".format(nowTime - beginTime), (10, 60), font, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
         else:
-            cv2.putText(frame, "Not Recording   <1>record    <2>flip    <q,ESC>exit", (10, 30), font, 0.7, (0,0,255), 1, cv2.LINE_AA)
+            # メニュー
+            cv2.putText(frame, "Not Recording   <1>record   <2>flip   <q,ESC>exit", (10, 30), font, 0.7, (0,255,0), 1, cv2.LINE_AA)
         cv2.imshow('video_capture', frame)
 
         k = cv2.waitKey(1) & 0xFF
@@ -69,9 +78,9 @@ if __name__ == '__main__':
             isRecording = not isRecording
             if (isRecording):
                 # ファイル名に日時を使用
-                nowtime = time.time()
-                nowdate = datetime.datetime.fromtimestamp(nowtime)
-                filePath = exportDirectoryPath + os.path.sep + '{0:%Y%m%d-%H%M%S}-{1}.mp4'.format(nowdate, int((nowtime % 1) * 10))
+                beginTime = nowTime
+                nowDate = datetime.datetime.fromtimestamp(beginTime)
+                filePath = exportDirectoryPath + os.path.sep + '{0:%Y%m%d-%H%M%S}-{1}.mp4'.format(nowDate, int((nowTime % 1) * 10))
                 video = cv2.VideoWriter(filePath, fourcc, fps, (w, h))  # 動画の仕様（ファイル名、fourcc, FPS, サイズ）
                 print("  >record start:{0}".format(filePath))
             else:
